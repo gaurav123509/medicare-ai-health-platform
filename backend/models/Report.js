@@ -1,69 +1,73 @@
-const mongoose = require('mongoose');
+const {
+  CompatibleModel,
+  DataTypes,
+  createObjectId,
+  jsonField,
+  sequelize,
+} = require('./_sequelize');
 
-const reportAnalysisSchema = new mongoose.Schema(
+class Report extends CompatibleModel {}
+
+Report.init(
   {
-    summary: { type: String, trim: true, default: '' },
-    keyObservations: { type: [String], default: [] },
-    abnormalIndicators: { type: [String], default: [] },
-    recommendations: { type: [String], default: [] },
-    followUpLevel: {
-      type: String,
-      enum: ['routine', 'soon', 'urgent'],
-      default: 'routine',
+    _id: {
+      type: DataTypes.STRING(24),
+      primaryKey: true,
+      allowNull: false,
+      defaultValue: createObjectId,
     },
-    provider: { type: String, default: 'local-fallback' },
-  },
-  { _id: false },
-);
-
-const reportSchema = new mongoose.Schema(
-  {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+      type: DataTypes.STRING(24),
+      allowNull: false,
     },
     title: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     reportType: {
-      type: String,
-      trim: true,
-      default: 'general',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'general',
     },
     filePath: {
-      type: String,
-      required: true,
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     originalName: {
-      type: String,
-      trim: true,
-      required: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     mimeType: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     size: {
-      type: Number,
-      default: 0,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
     extractedText: {
-      type: String,
-      default: '',
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '',
     },
-    analysis: {
-      type: reportAnalysisSchema,
-      default: () => ({}),
-    },
+    analysis: jsonField('analysis', {
+      summary: '',
+      keyObservations: [],
+      abnormalIndicators: [],
+      recommendations: [],
+      followUpLevel: 'routine',
+      provider: 'local-fallback',
+    }),
   },
   {
+    sequelize,
+    modelName: 'Report',
+    tableName: 'reports',
     timestamps: true,
   },
 );
 
-module.exports = mongoose.model('Report', reportSchema);
+module.exports = Report;

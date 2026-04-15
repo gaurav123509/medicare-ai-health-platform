@@ -1,100 +1,108 @@
-const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const {
+  CompatibleModel,
+  DataTypes,
+  createObjectId,
+  jsonField,
+  sequelize,
+} = require('./_sequelize');
 
-const emergencyContactSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    phone: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    relation: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-  },
-  { _id: false },
-);
+class User extends CompatibleModel {
+  static get hiddenFields() {
+    return ['password'];
+  }
 
-const userSchema = new mongoose.Schema(
+  async comparePassword(candidatePassword) {
+    return bcrypt.compare(candidatePassword, this.getDataValue('password'));
+  }
+}
+
+User.init(
   {
+    _id: {
+      type: DataTypes.STRING(24),
+      primaryKey: true,
+      allowNull: false,
+      defaultValue: createObjectId,
+    },
     name: {
-      type: String,
-      required: [true, 'Name is required'],
-      trim: true,
-      minlength: [2, 'Name must be at least 2 characters long'],
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        len: {
+          args: [2, 255],
+          msg: 'Name must be at least 2 characters long',
+        },
+      },
+      set(value) {
+        this.setDataValue('name', String(value || '').trim());
+      },
     },
     email: {
-      type: String,
-      required: [true, 'Email is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
       unique: true,
-      lowercase: true,
-      trim: true,
+      set(value) {
+        this.setDataValue('email', String(value || '').trim().toLowerCase());
+      },
     },
     password: {
-      type: String,
-      required: [true, 'Password is required'],
-      minlength: [8, 'Password must be at least 8 characters long'],
-      select: false,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     phone: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
+      set(value) {
+        this.setDataValue('phone', String(value || '').trim());
+      },
     },
     age: {
-      type: Number,
-      min: 0,
-      max: 120,
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: 0,
+        max: 120,
+      },
     },
     gender: {
-      type: String,
-      enum: ['male', 'female', 'other', 'prefer_not_to_say'],
-      default: 'prefer_not_to_say',
+      type: DataTypes.ENUM('male', 'female', 'other', 'prefer_not_to_say'),
+      allowNull: false,
+      defaultValue: 'prefer_not_to_say',
     },
     bloodGroup: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
+      set(value) {
+        this.setDataValue('bloodGroup', String(value || '').trim());
+      },
     },
     role: {
-      type: String,
-      enum: ['patient', 'doctor', 'admin'],
-      default: 'patient',
+      type: DataTypes.ENUM('patient', 'doctor', 'admin'),
+      allowNull: false,
+      defaultValue: 'patient',
     },
-    emergencyContact: {
-      type: emergencyContactSchema,
-      default: () => ({}),
-    },
+    emergencyContact: jsonField('emergencyContact', {
+      name: '',
+      phone: '',
+      relation: '',
+    }),
   },
   {
+    sequelize,
+    modelName: 'User',
+    tableName: 'users',
     timestamps: true,
-    toJSON: {
-      transform: (doc, ret) => {
-        delete ret.password;
-        return ret;
+    hooks: {
+      beforeSave: async (user) => {
+        if (user.changed('password')) {
+          user.setDataValue('password', await bcrypt.hash(user.getDataValue('password'), 12));
+        }
       },
     },
   },
 );
 
-userSchema.pre('save', async function hashPassword(next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
-
-  this.password = await bcrypt.hash(this.password, 12);
-  return next();
-});
-
-userSchema.methods.comparePassword = function comparePassword(candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
-};
-
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;

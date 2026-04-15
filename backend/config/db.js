@@ -1,36 +1,94 @@
+const fs = require('fs');
+const path = require('path');
 const mongoose = require('mongoose');
+const { Sequelize } = require('sequelize');
 
-mongoose.set('strictQuery', true);
-mongoose.set('bufferCommands', false);
+const databasePath = path.join(__dirname, '..', 'database.sqlite');
+const databaseDir = path.dirname(databasePath);
+
+if (!fs.existsSync(databaseDir)) {
+  fs.mkdirSync(databaseDir, { recursive: true });
+}
+
+const sequelize = new Sequelize({
+  dialect: 'sqlite',
+  storage: databasePath,
+  logging: false,
+});
+
+const setReadyState = (value) => {
+  try {
+    Object.defineProperty(mongoose.connection, 'readyState', {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value,
+    });
+  } catch (error) {
+    mongoose.connection.readyState = value;
+  }
+};
+
+const setConnectionHost = (value) => {
+  try {
+    Object.defineProperty(mongoose.connection, 'host', {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value,
+    });
+  } catch (error) {
+    mongoose.connection.host = value;
+  }
+};
+
+setReadyState(0);
+setConnectionHost('sqlite');
+
+mongoose.connection.close = async () => {
+  if (sequelize) {
+    await sequelize.close();
+  }
+
+  setReadyState(0);
+};
+
+mongoose.connection.on = () => mongoose.connection;
+
+let isConnected = false;
 
 const connectDB = async () => {
-  const mongoUri = process.env.MONGODB_URI;
-
-  if (!mongoUri) {
-    console.warn('[db] MONGODB_URI is missing. Starting server without an active database connection.');
-    return { connected: false };
+  if (isConnected) {
+    return {
+      connected: true,
+      dialect: 'sqlite',
+      storage: databasePath,
+    };
   }
 
   try {
-    await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 5000,
-    });
+    await sequelize.authenticate();
+    await sequelize.sync();
 
-    mongoose.connection.on('error', (error) => {
-      console.error(`[db] MongoDB runtime error: ${error.message}`);
-    });
+    isConnected = true;
+    setReadyState(1);
+    setConnectionHost('sqlite');
 
-    console.log(`[db] MongoDB connected: ${mongoose.connection.host}`);
-    return { connected: true };
+    console.log(`[db] SQLite connected: ${databasePath}`);
+
+    return {
+      connected: true,
+      dialect: 'sqlite',
+      storage: databasePath,
+    };
   } catch (error) {
-    console.error(`[db] MongoDB connection failed: ${error.message}`);
-
-    if (process.env.DB_STRICT_START === 'true') {
-      throw error;
-    }
-
-    return { connected: false, error };
+    setReadyState(0);
+    console.error(`[db] SQLite connection failed: ${error.message}`);
+    throw error;
   }
 };
 
 module.exports = connectDB;
+module.exports.sequelize = sequelize;
+module.exports.Sequelize = Sequelize;
+module.exports.databasePath = databasePath;

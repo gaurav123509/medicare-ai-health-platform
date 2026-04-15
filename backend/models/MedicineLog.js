@@ -1,75 +1,79 @@
-const mongoose = require('mongoose');
+const {
+  CompatibleModel,
+  DataTypes,
+  createObjectId,
+  jsonField,
+  sequelize,
+} = require('./_sequelize');
 
-const verificationResultSchema = new mongoose.Schema(
+class MedicineLog extends CompatibleModel {}
+
+MedicineLog.init(
   {
-    isLikelyAuthentic: { type: Boolean, default: true },
-    confidence: { type: Number, min: 0, max: 1, default: 0.5 },
-    riskLevel: {
-      type: String,
-      enum: ['low', 'medium', 'high'],
-      default: 'low',
+    _id: {
+      type: DataTypes.STRING(24),
+      primaryKey: true,
+      allowNull: false,
+      defaultValue: createObjectId,
     },
-    indicators: { type: [String], default: [] },
-    recommendations: { type: [String], default: [] },
-    extractedText: { type: [String], default: [] },
-    provider: { type: String, default: 'rule-engine' },
-  },
-  { _id: false },
-);
-
-const medicineLogSchema = new mongoose.Schema(
-  {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+      type: DataTypes.STRING(24),
+      allowNull: false,
     },
     medicineName: {
-      type: String,
-      trim: true,
-      required: [true, 'Medicine name is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     batchNumber: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     manufacturer: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     expiryDate: {
-      type: Date,
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     purchaseSource: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     packagingCondition: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     uploadedImagePath: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     uploadedImageOriginalName: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
-    verificationResult: {
-      type: verificationResultSchema,
-      default: () => ({}),
-    },
+    verificationResult: jsonField('verificationResult', {
+      isLikelyAuthentic: true,
+      confidence: 0.5,
+      riskLevel: 'low',
+      indicators: [],
+      recommendations: [],
+      extractedText: [],
+      provider: 'rule-engine',
+    }),
   },
   {
+    sequelize,
+    modelName: 'MedicineLog',
+    tableName: 'medicine_logs',
     timestamps: true,
   },
 );
 
-module.exports = mongoose.model('MedicineLog', medicineLogSchema);
+module.exports = MedicineLog;

@@ -1,68 +1,75 @@
-const mongoose = require('mongoose');
+const {
+  CompatibleModel,
+  DataTypes,
+  createObjectId,
+  jsonField,
+  sequelize,
+} = require('./_sequelize');
 
-const reminderSchema = new mongoose.Schema(
+class Reminder extends CompatibleModel {}
+
+Reminder.init(
   {
+    _id: {
+      type: DataTypes.STRING(24),
+      primaryKey: true,
+      allowNull: false,
+      defaultValue: createObjectId,
+    },
     user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+      type: DataTypes.STRING(24),
+      allowNull: false,
     },
     medicineName: {
-      type: String,
-      trim: true,
-      required: [true, 'Medicine name is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     dosage: {
-      type: String,
-      trim: true,
-      required: [true, 'Dosage is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     instructions: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     scheduleType: {
-      type: String,
-      enum: ['daily', 'weekly', 'custom'],
-      default: 'daily',
+      type: DataTypes.ENUM('daily', 'weekly', 'custom'),
+      allowNull: false,
+      defaultValue: 'daily',
     },
-    times: {
-      type: [String],
-      required: true,
-      validate: {
-        validator: (items) => Array.isArray(items) && items.length > 0,
-        message: 'At least one reminder time is required',
-      },
-    },
-    daysOfWeek: {
-      type: [Number],
-      default: [],
-    },
+    times: jsonField('times', []),
+    daysOfWeek: jsonField('daysOfWeek', []),
     startDate: {
-      type: Date,
-      required: true,
+      type: DataTypes.DATE,
+      allowNull: false,
     },
     endDate: {
-      type: Date,
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     isActive: {
-      type: Boolean,
-      default: true,
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
     nextTriggerAt: {
-      type: Date,
-      default: null,
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
     },
     notes: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '',
     },
   },
   {
+    sequelize,
+    modelName: 'Reminder',
+    tableName: 'reminders',
     timestamps: true,
   },
 );
 
-module.exports = mongoose.model('Reminder', reminderSchema);
+module.exports = Reminder;

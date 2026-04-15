@@ -1,74 +1,85 @@
-const mongoose = require('mongoose');
+const {
+  CompatibleModel,
+  DataTypes,
+  createObjectId,
+  jsonField,
+  sequelize,
+} = require('./_sequelize');
 
-const appointmentSchema = new mongoose.Schema(
+class Appointment extends CompatibleModel {}
+
+Appointment.init(
   {
+    _id: {
+      type: DataTypes.STRING(24),
+      primaryKey: true,
+      allowNull: false,
+      defaultValue: createObjectId,
+    },
     user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+      type: DataTypes.STRING(24),
+      allowNull: false,
     },
     doctorName: {
-      type: String,
-      trim: true,
-      required: [true, 'Doctor name is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     specialty: {
-      type: String,
-      trim: true,
-      required: [true, 'Specialty is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     hospitalName: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     appointmentDate: {
-      type: Date,
-      required: [true, 'Appointment date is required'],
+      type: DataTypes.DATE,
+      allowNull: false,
     },
     mode: {
-      type: String,
-      enum: ['online', 'offline'],
-      default: 'online',
+      type: DataTypes.ENUM('online', 'offline'),
+      allowNull: false,
+      defaultValue: 'online',
     },
-    symptoms: {
-      type: [String],
-      default: [],
-    },
+    symptoms: jsonField('symptoms', []),
     notes: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '',
     },
     status: {
-      type: String,
-      enum: ['booked', 'completed', 'cancelled'],
-      default: 'booked',
+      type: DataTypes.ENUM('booked', 'completed', 'cancelled'),
+      allowNull: false,
+      defaultValue: 'booked',
     },
     contactEmail: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     contactPhone: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     meetingLink: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     fee: {
-      type: Number,
-      min: 0,
-      default: 0,
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
     },
   },
   {
+    sequelize,
+    modelName: 'Appointment',
+    tableName: 'appointments',
     timestamps: true,
   },
 );
 
-module.exports = mongoose.model('Appointment', appointmentSchema);
+module.exports = Appointment;

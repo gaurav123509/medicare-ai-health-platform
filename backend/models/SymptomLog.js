@@ -1,99 +1,75 @@
-const mongoose = require('mongoose');
+const {
+  CompatibleModel,
+  DataTypes,
+  createObjectId,
+  jsonField,
+  sequelize,
+} = require('./_sequelize');
 
-const possibleConditionSchema = new mongoose.Schema(
-  {
-    name: { type: String, trim: true, required: true },
-    probability: { type: Number, min: 0, max: 1, default: 0 },
-    rationale: { type: String, trim: true, default: '' },
-  },
-  { _id: false },
-);
+class SymptomLog extends CompatibleModel {}
 
-const aiResponseSchema = new mongoose.Schema(
+SymptomLog.init(
   {
-    summary: { type: String, trim: true, default: '' },
-    triageLevel: {
-      type: String,
-      enum: ['low', 'medium', 'high', 'critical'],
-      default: 'low',
+    _id: {
+      type: DataTypes.STRING(24),
+      primaryKey: true,
+      allowNull: false,
+      defaultValue: createObjectId,
     },
-    possibleConditions: {
-      type: [possibleConditionSchema],
-      default: [],
-    },
-    recommendations: {
-      type: [String],
-      default: [],
-    },
-    redFlags: {
-      type: [String],
-      default: [],
-    },
-    provider: {
-      type: String,
-      default: 'local-fallback',
-    },
-    rawText: {
-      type: String,
-      default: '',
-    },
-  },
-  { _id: false },
-);
-
-const symptomLogSchema = new mongoose.Schema(
-  {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+      type: DataTypes.STRING(24),
+      allowNull: false,
     },
     source: {
-      type: String,
-      enum: ['symptom-check', 'disease-predict'],
-      default: 'symptom-check',
+      type: DataTypes.ENUM('symptom-check', 'disease-predict'),
+      allowNull: false,
+      defaultValue: 'symptom-check',
     },
-    symptoms: {
-      type: [String],
-      required: true,
-      validate: {
-        validator: (items) => Array.isArray(items) && items.length > 0,
-        message: 'At least one symptom is required',
-      },
-    },
+    symptoms: jsonField('symptoms', []),
     duration: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     severity: {
-      type: String,
-      enum: ['mild', 'moderate', 'severe'],
-      default: 'mild',
+      type: DataTypes.ENUM('mild', 'moderate', 'severe'),
+      allowNull: false,
+      defaultValue: 'mild',
     },
     age: {
-      type: Number,
-      min: 0,
-      max: 120,
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: 0,
+        max: 120,
+      },
     },
     gender: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
     notes: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '',
     },
-    aiResponse: {
-      type: aiResponseSchema,
-      default: () => ({}),
-    },
+    aiResponse: jsonField('aiResponse', {
+      summary: '',
+      triageLevel: 'low',
+      possibleConditions: [],
+      recommendations: [],
+      redFlags: [],
+      provider: 'local-fallback',
+      rawText: '',
+    }),
   },
   {
+    sequelize,
+    modelName: 'SymptomLog',
+    tableName: 'symptom_logs',
     timestamps: true,
   },
 );
 
-module.exports = mongoose.model('SymptomLog', symptomLogSchema);
+module.exports = SymptomLog;

@@ -1,83 +1,63 @@
-const mongoose = require('mongoose');
+const {
+  CompatibleModel,
+  DataTypes,
+  createObjectId,
+  jsonField,
+  sequelize,
+} = require('./_sequelize');
 
-const emergencyAssessmentSchema = new mongoose.Schema(
-  {
-    priority: {
-      type: String,
-      enum: ['medium', 'high', 'critical'],
-      default: 'high',
-    },
-    priorityScore: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: 70,
-    },
-    immediateActions: {
-      type: [String],
-      default: [],
-    },
-    escalationAdvice: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-  },
-  { _id: false },
-);
+class EmergencyLog extends CompatibleModel {}
 
-const locationSchema = new mongoose.Schema(
+EmergencyLog.init(
   {
-    latitude: { type: Number },
-    longitude: { type: Number },
-    address: { type: String, trim: true, default: '' },
-  },
-  { _id: false },
-);
-
-const emergencyLogSchema = new mongoose.Schema(
-  {
+    _id: {
+      type: DataTypes.STRING(24),
+      primaryKey: true,
+      allowNull: false,
+      defaultValue: createObjectId,
+    },
     user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+      type: DataTypes.STRING(24),
+      allowNull: false,
     },
     emergencyType: {
-      type: String,
-      trim: true,
-      required: [true, 'Emergency type is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     message: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '',
     },
-    location: {
-      type: locationSchema,
-      default: () => ({}),
-    },
+    location: jsonField('location', {
+      latitude: null,
+      longitude: null,
+      address: '',
+    }),
     contactNumber: {
-      type: String,
-      trim: true,
-      default: '',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
-    contactsNotified: {
-      type: [String],
-      default: [],
-    },
+    contactsNotified: jsonField('contactsNotified', []),
     status: {
-      type: String,
-      enum: ['triggered', 'acknowledged', 'resolved'],
-      default: 'triggered',
+      type: DataTypes.ENUM('triggered', 'acknowledged', 'resolved'),
+      allowNull: false,
+      defaultValue: 'triggered',
     },
-    assessment: {
-      type: emergencyAssessmentSchema,
-      default: () => ({}),
-    },
+    assessment: jsonField('assessment', {
+      priority: 'high',
+      priorityScore: 70,
+      immediateActions: [],
+      escalationAdvice: '',
+    }),
   },
   {
+    sequelize,
+    modelName: 'EmergencyLog',
+    tableName: 'emergency_logs',
     timestamps: true,
   },
 );
 
-module.exports = mongoose.model('EmergencyLog', emergencyLogSchema);
+module.exports = EmergencyLog;
