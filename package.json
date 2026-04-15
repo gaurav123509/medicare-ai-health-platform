@@ -1,0 +1,14 @@
+{
+  "name": "medicare-ai-health-platform",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Root package for deploying the MediCare AI backend from Render",
+  "scripts": {
+    "postinstall": "npm install --prefix backend",
+    "start": "npm start --prefix backend",
+    "dev": "npm run dev --prefix backend"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}

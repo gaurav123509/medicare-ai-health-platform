@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: medicare-ai-health-platform
+    env: node
+    rootDir: .
+    buildCommand: npm install
+    startCommand: npm start
