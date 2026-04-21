@@ -3,7 +3,9 @@ const path = require('path');
 const mongoose = require('mongoose');
 const { Sequelize } = require('sequelize');
 
-const databasePath = path.join(__dirname, '..', 'database.sqlite');
+const databasePath = process.env.SQLITE_STORAGE_PATH
+  ? path.resolve(process.env.SQLITE_STORAGE_PATH)
+  : path.join(__dirname, '..', 'database.sqlite');
 const databaseDir = path.dirname(databasePath);
 
 if (!fs.existsSync(databaseDir)) {
@@ -68,7 +70,9 @@ const connectDB = async () => {
 
   try {
     await sequelize.authenticate();
-    await sequelize.sync();
+    await sequelize.sync({
+      alter: process.env.DB_AUTO_ALTER !== 'false',
+    });
 
     isConnected = true;
     setReadyState(1);

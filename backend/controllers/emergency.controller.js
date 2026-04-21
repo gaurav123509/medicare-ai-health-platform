@@ -16,6 +16,7 @@ const triggerSOS = asyncHandler(async (req, res) => {
     message: String(req.body.message || '').trim(),
     symptoms: normalizeStringArray(req.body.symptoms),
     contactsNotified: normalizeStringArray(req.body.contactsNotified),
+    contactNumber: String(req.body.contactNumber || req.user.phone || '').trim(),
     location: {
       latitude: normalizeNumber(req.body.location?.latitude ?? req.body.latitude),
       longitude: normalizeNumber(req.body.location?.longitude ?? req.body.longitude),
@@ -30,13 +31,17 @@ const triggerSOS = asyncHandler(async (req, res) => {
     emergencyType,
     message: payload.message,
     location: payload.location,
-    contactNumber: String(req.body.contactNumber || req.user.phone || '').trim(),
+    contactNumber: payload.contactNumber,
     contactsNotified: assessment.contactsNotified,
     assessment: {
       priority: assessment.priority,
       priorityScore: assessment.priorityScore,
       immediateActions: assessment.immediateActions,
       escalationAdvice: assessment.escalationAdvice,
+      responderSummary: assessment.responderSummary,
+      responderAlerts: assessment.responderAlerts,
+      shareableLocation: assessment.shareableLocation,
+      locationMapLink: assessment.locationMapLink,
     },
   });
 

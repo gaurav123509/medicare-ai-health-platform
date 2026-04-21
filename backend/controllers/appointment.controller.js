@@ -1,53 +1,86 @@
-const Appointment = require('../models/Appointment');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { createError, sendSuccess } = require('../utils/response');
-const { isFutureDate, isValidEmail, isValidPhone, normalizeNumber, normalizeStringArray } = require('../utils/validators');
+const { sendSuccess } = require('../utils/response');
+const {
+  cancelAppointment,
+  createAppointment,
+  getAppointmentForUser,
+  getJoinDetails,
+  listAppointmentsForUser,
+  listDoctors,
+  payDemoAppointment,
+  rescheduleAppointment,
+} = require('../services/appointment.service');
 
 const bookAppointment = asyncHandler(async (req, res) => {
-  const doctorName = String(req.body.doctorName || '').trim();
-  const specialty = String(req.body.specialty || '').trim();
-  const appointmentDate = req.body.appointmentDate;
-
-  if (!doctorName || !specialty || !appointmentDate) {
-    throw createError('doctorName, specialty, and appointmentDate are required', 400);
-  }
-
-  if (!isFutureDate(appointmentDate)) {
-    throw createError('appointmentDate must be a valid future date', 400);
-  }
-
-  if (req.body.contactEmail && !isValidEmail(req.body.contactEmail)) {
-    throw createError('contactEmail must be valid', 400);
-  }
-
-  if (req.body.contactPhone && !isValidPhone(req.body.contactPhone)) {
-    throw createError('contactPhone must be valid', 400);
-  }
-
-  const appointment = await Appointment.create({
-    user: req.user._id,
-    doctorName,
-    specialty,
-    hospitalName: String(req.body.hospitalName || '').trim(),
-    appointmentDate: new Date(appointmentDate),
-    mode: req.body.mode === 'offline' ? 'offline' : 'online',
-    symptoms: normalizeStringArray(req.body.symptoms),
-    notes: String(req.body.notes || '').trim(),
-    contactEmail: String(req.body.contactEmail || '').trim().toLowerCase(),
-    contactPhone: String(req.body.contactPhone || '').trim(),
-    meetingLink: String(req.body.meetingLink || '').trim(),
-    fee: normalizeNumber(req.body.fee) || 0,
+  const appointment = await createAppointment({
+    user: req.user,
+    payload: req.body,
   });
 
   return sendSuccess(res, 'Appointment booked successfully', { appointment }, 201);
 });
 
 const listAppointments = asyncHandler(async (req, res) => {
-  const appointments = await Appointment.find({ user: req.user._id }).sort({ appointmentDate: 1 });
+  const appointments = await listAppointmentsForUser(req.user);
   return sendSuccess(res, 'Appointments fetched successfully', { appointments });
+});
+
+const listDoctorsController = asyncHandler(async (req, res) => {
+  const doctors = await listDoctors();
+  return sendSuccess(res, 'Doctors fetched successfully', { doctors });
+});
+
+const getAppointmentController = asyncHandler(async (req, res) => {
+  const appointment = await getAppointmentForUser(req.params.id, req.user);
+  return sendSuccess(res, 'Appointment fetched successfully', { appointment });
+});
+
+const rescheduleAppointmentController = asyncHandler(async (req, res) => {
+  const appointment = await rescheduleAppointment({
+    appointmentId: req.params.id,
+    user: req.user,
+    payload: req.body,
+  });
+
+  return sendSuccess(res, 'Appointment rescheduled successfully', { appointment });
+});
+
+const cancelAppointmentController = asyncHandler(async (req, res) => {
+  const appointment = await cancelAppointment({
+    appointmentId: req.params.id,
+    user: req.user,
+    payload: req.body,
+  });
+
+  return sendSuccess(res, 'Appointment cancelled successfully', { appointment });
+});
+
+const joinAppointmentController = asyncHandler(async (req, res) => {
+  const joinDetails = await getJoinDetails({
+    appointmentId: req.params.id,
+    user: req.user,
+  });
+
+  return sendSuccess(res, 'Join details fetched successfully', { joinDetails });
+});
+
+const payDemoAppointmentController = asyncHandler(async (req, res) => {
+  const appointment = await payDemoAppointment({
+    appointmentId: req.params.id,
+    user: req.user,
+    payload: req.body,
+  });
+
+  return sendSuccess(res, 'Demo payment completed successfully', { appointment });
 });
 
 module.exports = {
   bookAppointment,
+  cancelAppointmentController,
+  getAppointmentController,
+  joinAppointmentController,
   listAppointments,
+  listDoctorsController,
+  payDemoAppointmentController,
+  rescheduleAppointmentController,
 };

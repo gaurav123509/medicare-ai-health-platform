@@ -9,6 +9,7 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth.routes');
+const chatbotRoutes = require('./routes/chatbot.routes');
 const symptomRoutes = require('./routes/symptom.routes');
 const medicineRoutes = require('./routes/medicine.routes');
 const reportRoutes = require('./routes/report.routes');
@@ -21,6 +22,14 @@ const { sendSuccess } = require('./utils/response');
 
 const app = express();
 const port = Number(process.env.PORT) || 5000;
+const localDevelopmentOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
 const uploadDirectories = [
   path.join(__dirname, 'uploads'),
   path.join(__dirname, 'uploads', 'reports'),
@@ -36,11 +45,15 @@ uploadDirectories.forEach((directory) => {
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(',').map((entry) => entry.trim()).filter(Boolean)
   : [];
+const combinedAllowedOrigins = [...new Set([
+  ...allowedOrigins,
+  ...(process.env.NODE_ENV === 'production' ? [] : localDevelopmentOrigins),
+])];
 
 app.use(cors({
   credentials: true,
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    if (!origin || combinedAllowedOrigins.length === 0 || combinedAllowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
@@ -63,6 +76,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/symptom', symptomRoutes);
 app.use('/api/medicine', medicineRoutes);
 app.use('/api/report', reportRoutes);

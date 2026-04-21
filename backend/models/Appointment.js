@@ -20,6 +20,11 @@ Appointment.init(
       type: DataTypes.STRING(24),
       allowNull: false,
     },
+    doctorId: {
+      type: DataTypes.STRING(24),
+      allowNull: false,
+      defaultValue: '',
+    },
     doctorName: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -68,10 +73,55 @@ Appointment.init(
       allowNull: false,
       defaultValue: '',
     },
+    meetingProvider: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
+    },
+    meetingRoomId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
+    },
     fee: {
       type: DataTypes.FLOAT,
       allowNull: false,
       defaultValue: 0,
+    },
+    paymentStatus: {
+      type: DataTypes.ENUM('pending', 'paid', 'failed', 'refunded'),
+      allowNull: false,
+      defaultValue: 'pending',
+    },
+    paymentMethod: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
+    },
+    paymentReference: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
+    },
+    paymentAmount: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    paymentPaidAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
+    cancelReason: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '',
+    },
+    cancelledAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
     },
   },
   {

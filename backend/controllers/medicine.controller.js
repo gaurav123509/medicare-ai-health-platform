@@ -1,5 +1,6 @@
 const MedicineLog = require('../models/MedicineLog');
 const { extractTextFromFile } = require('../services/ocr.service');
+const { compareMedicinePrices, extractMedicineNameFromText } = require('../services/medicinePrice.service');
 const { verifyMedicine } = require('../services/medicineVerify.service');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { createError, sendSuccess } = require('../utils/response');
@@ -80,7 +81,41 @@ const verifyMedicineController = asyncHandler(async (req, res) => {
   );
 });
 
+const compareMedicinePricesController = asyncHandler(async (req, res) => {
+  const explicitMedicineName = String(req.body.medicineName || '').trim();
+  const ocrResult = req.file ? await extractTextFromFile(req.file) : null;
+  const extractedMedicineName = explicitMedicineName
+    || extractMedicineNameFromText(ocrResult?.text, req.file?.originalname);
+
+  if (!explicitMedicineName && !req.file) {
+    throw createError('medicineName or image is required', 400);
+  }
+
+  if (!extractedMedicineName) {
+    throw createError('Unable to determine the medicine name from the provided input', 400);
+  }
+
+  const comparison = await compareMedicinePrices({
+    query: extractedMedicineName,
+  });
+
+  return sendSuccess(
+    res,
+    'Medicine price comparison generated successfully',
+    {
+      input: {
+        medicineName: explicitMedicineName,
+        source: explicitMedicineName ? 'manual-input' : 'image-ocr',
+      },
+      extractedMedicineName,
+      ocr: ocrResult,
+      comparison,
+    },
+  );
+});
+
 module.exports = {
   uploadMedicineImage,
   verifyMedicineController,
+  compareMedicinePricesController,
 };

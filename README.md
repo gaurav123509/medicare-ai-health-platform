@@ -9,7 +9,7 @@ Production-ready Node.js backend for a HealthTech hackathon project with:
 - OCR-powered report analysis
 - medicine reminders
 - SOS emergency logging
-- telemedicine appointment booking
+- telemedicine appointment booking with online meeting links and doctor directory
 
 ## Project Structure
 
@@ -28,9 +28,10 @@ npm run dev
 
 Update `backend/.env` with:
 
-- MongoDB Atlas URI
 - JWT secret
 - OpenAI or Gemini API keys if you want live AI provider responses
 - OCR provider key if you want external OCR
+- optional `SQLITE_STORAGE_PATH` if you want the SQLite file in a custom location
+- optional `MEETING_BASE_URL` if you want custom meeting links instead of Jitsi
 
 The code still runs with safe local fallbacks when AI or OCR providers are unavailable.

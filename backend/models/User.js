@@ -84,6 +84,38 @@ User.init(
       allowNull: false,
       defaultValue: 'patient',
     },
+    specialty: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
+      set(value) {
+        this.setDataValue('specialty', String(value || '').trim());
+      },
+    },
+    hospitalName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
+      set(value) {
+        this.setDataValue('hospitalName', String(value || '').trim());
+      },
+    },
+    consultationFee: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    consultationModes: jsonField('consultationModes', ['online']),
+    meetingProvider: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'jitsi',
+    },
+    bio: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '',
+    },
     emergencyContact: jsonField('emergencyContact', {
       name: '',
       phone: '',

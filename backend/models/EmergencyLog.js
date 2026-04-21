@@ -50,6 +50,10 @@ EmergencyLog.init(
       priorityScore: 70,
       immediateActions: [],
       escalationAdvice: '',
+      responderSummary: '',
+      responderAlerts: [],
+      shareableLocation: '',
+      locationMapLink: '',
     }),
   },
   {
